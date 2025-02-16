@@ -10,58 +10,47 @@ const app: Express = express()
 
 // Middleware to parse JSON requests
 app.use(express.json())
-
-// Middleware to parse URL-encoded data
 app.use(express.urlencoded({ extended: true }))
 
 // Route handling: All routes inside `userRouter` will be prefixed with `/api`
-app.use('/api', userRouter)
+app.use('/api/auth', userRouter)
 
-// Middleware for handling errors
-app.use(errorConverter) // Converts errors into APIError format
-app.use(errorHandler) // Handles all errors and sends a response
+// Error handling middleware
+app.use(errorConverter)
+app.use(errorHandler)
 
-// Check database connection before starting the server
+// Check database connection
 sequelize
     .authenticate()
     .then(() => console.log('✅ Database connected successfully!'))
     .catch((err) => console.error('❌ Database connection failed:', err))
 
-// Start the Express server and listen on the specified port
+// Start the Auth Service server
 const server: Server = app.listen(config.PORT, () => {
-    console.log(`🚀 Server is running on port ${config.PORT}`)
+    console.log(`🚀 Auth Service is running on port ${config.PORT}`)
 })
 
-// Initialize RabbitMQ message broker
+// Initialize RabbitMQ connection
 const initializeRabbitMQClient = async () => {
     try {
-        await rabbitMQService.init() // Establishes connection and listens for messages
+        await rabbitMQService.init()
         console.log('🐇 RabbitMQ client initialized and listening for messages.')
     } catch (err) {
         console.error('❌ Failed to initialize RabbitMQ client:', err)
     }
 }
 
-// Run the RabbitMQ client initialization
 initializeRabbitMQClient()
 
-// Graceful shutdown: Handles server termination to free up resources
+// Graceful shutdown
 const exitHandler = () => {
-    console.log('🔴 Shutting down server...')
+    console.log('🔴 Shutting down Auth Service...')
     server.close(() => {
-        console.info('✅ Server closed')
+        console.info('✅ Auth Service closed')
         process.exit(1)
     })
 }
 
-// Handle unexpected errors and unhandled promise rejections
-const unexpectedErrorHandler = (error: unknown) => {
-    console.error('⚠️ Unexpected Error:', error)
-    exitHandler()
-}
+process.on('uncaughtException', exitHandler)
 
-// Catch and handle uncaught exceptions (e.g., runtime errors)
-process.on('uncaughtException', unexpectedErrorHandler)
-
-// Catch and handle unhandled promise rejections (e.g., async errors)
-process.on('unhandledRejection', unexpectedErrorHandler)
+process.on('unhandledRejection', exitHandler)
