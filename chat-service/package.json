@@ -36,6 +36,8 @@
     "devDependencies": {
         "cross-env": "^7.0.3",
         "eslint": "^9.20.1",
-        "globals": "^15.15.0"
+        "globals": "^15.15.0",
+        "rimraf": "^6.0.1",
+        "tsc-alias": "^1.8.10"
     }
 }
