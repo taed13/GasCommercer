@@ -1,5 +1,7 @@
 import { DataTypes, Model } from 'sequelize'
-import sequelize from '../connection'
+import Database from '../connection'
+
+const sequelize = Database.getInstance()
 
 export interface IUser extends Model {
     id: number

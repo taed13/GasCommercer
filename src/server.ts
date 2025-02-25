@@ -2,24 +2,32 @@ import express, { Express } from 'express'
 import { Server } from 'http'
 import userRouter from './routes/authRoutes'
 import { errorConverter, errorHandler } from './middleware'
-import { sequelize } from './database'
+import Database from './database/connection'
 import config from './config/config'
 import { rabbitMQService } from './services/RabbitMQService'
+import morgan from 'morgan'
+import helmet from 'helmet'
+import compression from 'compression'
 
 const app: Express = express()
 
 // Middleware to parse JSON requests
 app.use(express.json())
+app.use(morgan('dev'))
+app.use(helmet())
+app.use(compression())
 app.use(express.urlencoded({ extended: true }))
 
 // Route handling: All routes inside `userRouter` will be prefixed with `/api`
 app.use('/api/auth', userRouter)
 
-// Error handling middleware
+// Error handling middlewares
 app.use(errorConverter)
 app.use(errorHandler)
 
 // Check database connection
+const sequelize = Database.getInstance()
+
 sequelize
     .authenticate()
     .then(() => console.log('✅ Database connected successfully!'))
