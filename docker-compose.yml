@@ -1,0 +1,76 @@
+services:
+    mysql:
+        image: mysql:latest
+        restart: unless-stopped
+        ports:
+            - '3307:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: app_db
+            MYSQL_USER: app_user
+            MYSQL_PASSWORD: app_password
+        volumes:
+            - mysql-data:/var/lib/mysql
+
+    user:
+        build:
+            context: ./user-service
+            dockerfile: Dockerfile
+        ports:
+            - '8081:8081'
+        restart: always
+        depends_on:
+            - 'mysql'
+        environment:
+            - NODE_ENV=production
+            - DB_HOST=mysql
+            - DB_PORT=3307
+            - DB_USER=app_user
+            - DB_PASSWORD=app_password
+            - DB_NAME=app_db
+
+    chat:
+        build:
+            context: ./chat-service
+            dockerfile: Dockerfile
+        ports:
+            - '8082:8082'
+        depends_on:
+            - 'mysql'
+        environment:
+            - NODE_ENV=production
+            - DB_HOST=mysql
+            - DB_PORT=3307
+            - DB_USER=app_user
+            - DB_PASSWORD=app_password
+            - DB_NAME=app_db
+
+    notification:
+        build:
+            context: ./notification-service
+            dockerfile: Dockerfile
+        ports:
+            - '8083:8083'
+        depends_on:
+            - 'mysql'
+        environment:
+            - NODE_ENV=production
+            - DB_HOST=mysql
+            - DB_PORT=3307
+            - DB_USER=app_user
+            - DB_PASSWORD=app_password
+            - DB_NAME=app_db
+
+    nginx:
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        ports:
+            - '85:85'
+        depends_on:
+            - user
+            - chat
+            - notification
+
+volumes:
+    mysql-data:
